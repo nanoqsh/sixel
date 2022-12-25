@@ -122,11 +122,11 @@ where
 {
     use std::slice;
 
-    const ESCAPE_CHAR: u8 = 27;
+    const ESCAPE: &[u8] = slice::from_ref(&27);
 
     // Write header
-    out.write_all(slice::from_ref(&ESCAPE_CHAR))?;
-    write!(out, "Pq")?;
+    out.write_all(ESCAPE)?;
+    out.write_all(b"Pq")?;
 
     // Write colors
     for (index, color) in (0..).zip(palette.colors) {
@@ -136,11 +136,11 @@ where
     // Write lines
     for line in image.lines() {
         line.write(&mut out)?;
-        write!(out, "-")?;
+        out.write_all(b"-")?;
     }
 
     // Write end
-    out.write_all(slice::from_ref(&ESCAPE_CHAR))?;
+    out.write_all(ESCAPE)?;
     out.write_all(b"\\")?;
     out.flush()?;
 

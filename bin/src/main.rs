@@ -4,7 +4,11 @@ fn main() {
             encode::{self, Image, Palette},
             Color,
         },
-        std::{collections::HashMap, env, io},
+        std::{
+            collections::HashMap,
+            env,
+            io::{self, BufWriter},
+        },
     };
 
     let im = {
@@ -16,10 +20,12 @@ fn main() {
     };
 
     let im = im.as_rgb8().expect("rgb");
+    let width = im.width() as usize;
+    let height = im.height() as usize;
 
-    let mut buf = Vec::with_capacity(im.width() as usize * im.height() as usize);
-    let mut colors = Vec::new();
-    let mut indxs = HashMap::new();
+    let mut buf = Vec::with_capacity(width * height);
+    let mut colors = Vec::with_capacity(256);
+    let mut indxs = HashMap::with_capacity(256);
 
     for chunk in im.chunks(3) {
         let color = {
@@ -39,7 +45,7 @@ fn main() {
 
     let image = Image {
         pixels: &buf,
-        width: im.width() as usize,
+        width,
     };
 
     let palette = Palette {
@@ -47,6 +53,6 @@ fn main() {
         dither: &[],
     };
 
-    let out = io::stdout();
+    let out = BufWriter::new(io::stdout().lock());
     encode::encode(image, palette, out).expect("encode");
 }
