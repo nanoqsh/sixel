@@ -7,12 +7,8 @@ use {
 };
 
 #[derive(Clone, Copy)]
-pub struct Dither(pub usize, pub usize);
-
-#[derive(Clone, Copy)]
 pub struct Palette<'a> {
     pub colors: &'a [Color],
-    pub dither: &'a [Dither],
 }
 
 #[derive(Clone, Copy)]
@@ -23,16 +19,16 @@ pub struct Image<'a, I> {
 
 impl<I> Image<'_, I> {
     fn lines(&self) -> impl Iterator<Item = Line<I>> + '_ {
-        let slen = self.width * 6;
-        self.pixels.chunks(slen).map(|slin| Line {
-            slin,
+        let sixlen = self.width * 6;
+        self.pixels.chunks(sixlen).map(|sixline| Line {
+            sixline,
             width: self.width,
         })
     }
 }
 
 struct Line<'a, I> {
-    slin: &'a [I],
+    sixline: &'a [I],
     width: usize,
 }
 
@@ -42,8 +38,8 @@ impl<I> Line<'_, I> {
         I: Index,
         W: Write,
     {
-        let mut colors_to_write = HashSet::new();
-        for index in self.slin {
+        let mut colors_to_write = HashSet::with_capacity(64);
+        for index in self.sixline {
             colors_to_write.insert(index.index());
         }
 
@@ -52,7 +48,7 @@ impl<I> Line<'_, I> {
         for index in colors_to_write {
             sixels.fill(0);
             let mut any_pixel_used = false;
-            for (n, pixel) in (0..).zip(self.slin) {
+            for (n, pixel) in (0..).zip(self.sixline) {
                 if pixel.index() == index {
                     let row = n / self.width;
                     let col = n % self.width;

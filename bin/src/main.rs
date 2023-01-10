@@ -34,13 +34,13 @@ fn main() {
             Color::from(array)
         };
 
-        let index = indxs.entry(color).or_insert_with(|| {
+        let index = *indxs.entry(color).or_insert_with(|| {
             let index = colors.len() as u32;
             colors.push(color);
             index
         });
 
-        buf.push(*index);
+        buf.push(index);
     }
 
     let image = Image {
@@ -48,10 +48,7 @@ fn main() {
         width,
     };
 
-    let palette = Palette {
-        colors: &colors,
-        dither: &[],
-    };
+    let palette = Palette { colors: &colors };
 
     let out = BufWriter::new(io::stdout().lock());
     encode::encode(image, palette, out).expect("encode");
