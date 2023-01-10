@@ -1,5 +1,5 @@
 use {
-    crate::{Color, Index},
+    crate::Color,
     std::{
         collections::HashSet,
         io::{self, Write},
@@ -12,13 +12,13 @@ pub struct Palette<'a> {
 }
 
 #[derive(Clone, Copy)]
-pub struct Image<'a, I> {
-    pub pixels: &'a [I],
+pub struct Image<'a> {
+    pub pixels: &'a [u8],
     pub width: usize,
 }
 
-impl<I> Image<'_, I> {
-    fn lines(&self) -> impl Iterator<Item = Line<I>> + '_ {
+impl Image<'_> {
+    fn lines(&self) -> impl Iterator<Item = Line> + '_ {
         let sixlen = self.width * 6;
         self.pixels.chunks(sixlen).map(|sixline| Line {
             sixline,
@@ -27,20 +27,19 @@ impl<I> Image<'_, I> {
     }
 }
 
-struct Line<'a, I> {
-    sixline: &'a [I],
+struct Line<'a> {
+    sixline: &'a [u8],
     width: usize,
 }
 
-impl<I> Line<'_, I> {
+impl Line<'_> {
     fn write<W>(self, mut out: W) -> Result<(), Error>
     where
-        I: Index,
         W: Write,
     {
         let mut colors_to_write = HashSet::with_capacity(64);
-        for index in self.sixline {
-            colors_to_write.insert(index.index());
+        for &index in self.sixline {
+            colors_to_write.insert(index);
         }
 
         let mut sixels = vec![0; self.width];
@@ -48,8 +47,8 @@ impl<I> Line<'_, I> {
         for index in colors_to_write {
             sixels.fill(0);
             let mut any_pixel_used = false;
-            for (n, pixel) in (0..).zip(self.sixline) {
-                if pixel.index() == index {
+            for (n, &pixel) in (0..).zip(self.sixline) {
+                if pixel == index {
                     let row = n / self.width;
                     let col = n % self.width;
                     sixels[col] |= 1 << row;
@@ -111,9 +110,8 @@ where
     write(left, t)
 }
 
-pub fn encode<I, W>(image: Image<I>, palette: Palette, mut out: W) -> Result<(), Error>
+pub fn encode<W>(image: Image, palette: Palette, mut out: W) -> Result<(), Error>
 where
-    I: Index,
     W: Write,
 {
     use std::slice;

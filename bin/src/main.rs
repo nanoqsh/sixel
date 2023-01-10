@@ -30,12 +30,12 @@ fn main() {
     for chunk in im.chunks(3) {
         let color = {
             let array: [u8; 3] = chunk.try_into().expect("array");
-            let array = array.map(|v| v & !0b1111);
+            let array = array.map(|v| v & !0b11111);
             Color::from(array)
         };
 
         let index = *indxs.entry(color).or_insert_with(|| {
-            let index = colors.len() as u32;
+            let index = colors.len().try_into().expect("to many colors");
             colors.push(color);
             index
         });
